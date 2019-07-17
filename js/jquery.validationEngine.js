@@ -625,10 +625,19 @@
 						break;
 					case "ajax":
 						// AJAX defaults to returning it's loading message
-						errorMsg = methods._ajax(field, rules, i, options);
+						/*errorMsg = methods._ajax(field, rules, i, options);
 						if (errorMsg) {
 							promptType = "load";
-						}
+						}*/
+						errorMsg = methods._ajax(field, rules, i, options, function(errorMsg) {
+							if (errorMsg) {
+								promptType = "load";
+							}
+						
+							if(errorMsg.isError==false) {
+								errorMsg.status = '_break';
+							}
+						});						
 						break;
 					case "minSize":
 						errorMsg = methods._getErrorMessage(form, field, rules[i], rules, i, options, methods._minSize);
@@ -1407,7 +1416,8 @@
 		*            user options
 		* @return nothing! the ajax validator handles the prompts itself
 		*/
-		 _ajax: function(field, rules, i, options) {
+		 //_ajax: function(field, rules, i, options) {
+		 _ajax: function(field, rules, i, options, callback) {
 
 			 var errorSelector = rules[i + 1];
 			 var rule = options.allrules[errorSelector];
@@ -1527,10 +1537,12 @@
 							 }
 						 }
 						 errorField.trigger("jqv.field.result", [errorField, options.isError, msg]);
+						 var obj = {alertTextLoad: rule.alertTextLoad, isError: !status}; 
+						 callback(obj);
 					 }
 				 });
 
-				 return rule.alertTextLoad;
+				 //return rule.alertTextLoad;
 			 }
 		 },
 		/**
