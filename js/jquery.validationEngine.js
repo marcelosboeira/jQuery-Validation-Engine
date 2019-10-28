@@ -624,12 +624,14 @@
 						options.showArrow = false;
 						break;
 					case "ajax":
-						// AJAX defaults to returning it's loading message
-						errorMsg = methods._ajax(field, rules, i, options);
-						if (errorMsg) {
-							promptType = "load";
-						}
-						break;
+						errorMsg = methods._ajax(field, rules, i, options, function(errorMsg) {
+							if (errorMsg) {
+								promptType = "load";
+							}
+							if(errorMsg.isError==false) {
+								errorMsg.status = '_break';
+							}
+						});						
 					case "minSize":
 						errorMsg = methods._getErrorMessage(form, field, rules[i], rules, i, options, methods._minSize);
 						break;
@@ -1407,7 +1409,8 @@
 		*            user options
 		* @return nothing! the ajax validator handles the prompts itself
 		*/
-		 _ajax: function(field, rules, i, options) {
+		_ajax: function(field, rules, i, options, callback) { 
+		//_ajax: function(field, rules, i, options) {
 
 			 var errorSelector = rules[i + 1];
 			 var rule = options.allrules[errorSelector];
@@ -1491,7 +1494,7 @@
 										 var txt = options.allrules[msg].alertText;
 										 if (txt) {
 											msg = txt;
-							}
+										 }
 									 }
 								 }
 								 else
@@ -1500,6 +1503,7 @@
 								 if (options.showPrompts) methods._showPrompt(errorField, msg, "", true, options);
 							 } else {
 								 options.ajaxValidCache[errorFieldId] = true;
+								 options.isError = false;
 
 								 // resolves the msg prompt
 								 if(msg) {
@@ -1507,11 +1511,9 @@
 										 var txt = options.allrules[msg].alertTextOk;
 										 if (txt) {
 											msg = txt;
-							}
+										 }
 									 }
-								 }
-								 else
-								 msg = rule.alertTextOk;
+								 } else msg = rule.alertTextOk;
 
 								 if (options.showPrompts) {
 									 // see if we should display a green prompt
@@ -1522,15 +1524,20 @@
 								}
 
 								 // If a submit form triggered this, we want to re-submit the form
-								 if (options.eventTrigger == "submit")
+								 if (options.eventTrigger == "submit"){
 									field.closest("form").submit();
+								 }
+								 // coloquei
+								 methods._handleStatusCssClasses(field,options);
 							 }
 						 }
 						 errorField.trigger("jqv.field.result", [errorField, options.isError, msg]);
+						 var obj = {alertTextLoad: rule.alertTextLoad, isError: !status};
+						 callback(obj);						 
 					 }
 				 });
 
-				 return rule.alertTextLoad;
+				 //return rule.alertTextLoad;
 			 }
 		 },
 		/**
@@ -2136,8 +2143,8 @@
 		onSuccess: false,
 		onFailure: false,
 		validateAttribute: "class",
-		addSuccessCssClassToField: "",
-		addFailureCssClassToField: "",
+		addSuccessCssClassToField: "is-valid",
+		addFailureCssClassToField: "is-invalid",
 
 		// Auto-hide prompt
 		autoHidePrompt: false,
